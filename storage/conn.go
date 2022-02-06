@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// conn представляет собой одно соединение с узлом в кластере.
+// Conn  представляет собой одно соединение с узлом в кластере.
 type Conn struct {
 	sync.RWMutex
 	nodeID    string // node ID
