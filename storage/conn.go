@@ -1,44 +1,47 @@
 package storage
 
 import (
+	"context"
 	"fmt"
-	"github.com/feamo/esrest/models"
-	"sync"
-	"time"
+	"github.com/olivere/elastic/v7"
 )
 
-// Conn represents a single connection to a node in a cluster
-type Conn struct {
-	sync.RWMutex
-	nodeID    string // node ID
-	url       string
-	failures  int
-	dead      bool
-	deadSince *time.Time
+type Engine struct {
+	db *elastic.Client
 }
 
-// newConn creates a new connection to the given URL.
-func newConn(nodeID, url string) *Conn {
-	c := &Conn{
-		nodeID: nodeID,
-		url:    url,
-	}
-	return c
-}
+func connect() (*Engine, error) {
+	const (
+		host     = "localhost"
+		port     = 9200
+		userName = "feamo"
+		dbname   = "elasticsearch"
+	)
 
-// String returns a representation of the connection status.
-func (c *Conn) String() string {
-	c.RLock()
-	defer c.RUnlock()
-	return fmt.Sprintf("%s [dead=%v,failures=%d,deadSince=%v]", c.url, c.dead, c.failures, c.deadSince)
-}
+	// connection string
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host,
+		port,
+		userName,
+		dbname,
+	)
+	println(connStr)
 
-func (e *Conn) UserInsert(user *models.User) error {
-	query := `insert into "users"("email", "password") values($1, $2)`
-	_, err := e.db.Exec(query, user.Email, user.Password)
+	// open database
+	db, err := elastic.NewClient()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	ctx := context.Background()
+
+	// Ping the Elasticsearch server to get e.g. the version number
+	info, code, err := db.Ping("http://127.0.0.1:9200").Do(ctx)
+	if err != nil {
+		// Handle error
+		panic(err)
+	}
+	fmt.Printf("Elasticsearch returned with code %d and version %s\n", code, info.Version.Number)
+
 }

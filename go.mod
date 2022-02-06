@@ -1,4 +1,4 @@
-module github.com/feamo/esrest.git
+module github.com/feamo/esrest
 
 go 1.17
 
